@@ -57,10 +57,10 @@ static unsigned int next_pi_digit(void)
         "901224953430146549585371050792279689258923542019956112129021960864034418";
     static unsigned int pos = 0;
 
-	/*
-	 * 危险：取到字符串的最后一位了！！！
-	 * 构造MD2的S盒，会调用256次
-	 */
+    /*
+     * 危险：取到字符串的最后一位了！！！
+     * 构造MD2的S盒，256个元素，实际会调用722次
+     */
     if (pos == 730)
     {
         printf("WARNING!! pi string is not long enough, wrap around!\n");
@@ -77,38 +77,38 @@ static unsigned int rand(unsigned int n)
 {
     unsigned int x, y;
 
-	/* 构造1位随机数x */
+    /* 构造1位随机数x */
     x = next_pi_digit();
     y = 10;
 
-	/* 构造2位随机数x */
+    /* 构造2位随机数x */
     if (n > 10)
     {
         x = x * 10 + next_pi_digit();
         y = 100;
     }
 
-	/* 构造3位随机数x */
+    /* 构造3位随机数x */
     if (n > 100)
     {
         x = x * 10 + next_pi_digit();
         y = 1000;
     }
 
-	/*
-	 * 这里使用n进行整除和取模，所以n不能为0
-	 * 由于基于n进行取模，所以返回值介于0~n
-	 */
+    /*
+     * 这里使用n进行整除和取模，所以n不能为0
+     * 由于基于n进行取模，所以返回值介于0~n
+     */
     if (x < (n*(y/n))) /* division here is integer division */
     {
         return x % n;
     }
     else
     {
-		/*
-		 * 走到这里，会发生rand(n)内递归调用rand(n), 真的不会产生无限循环吗？
-		 * 答案是不会，因为内部x的状态会随着next_pi_digit()值的不同而变化
-		 */
+        /*
+         * 走到这里，会发生rand(n)内递归调用rand(n), 真的不会产生无限循环吗？
+         * 答案是不会，因为内部x的状态会随着next_pi_digit()值的不同而变化
+         */
         /* x value is too large, don't use it */
         return rand(n);
     }
@@ -123,18 +123,18 @@ static int generate_s_box(unsigned int *S, unsigned int size)
     unsigned int j;
     unsigned int tmp;
 
-	/* 初始化随机置换数组为S[0, 1, 2, ..., 255] */
+    /* 初始化随机置换数组为S[0, 1, 2, ..., 255] */
     for (i=0; i<size; i++)
     {
         S[i] = i;
     }
 
-	/* i = 2, 3, ..., 256 */
+    /* i = 2, 3, ..., 256 */
     for (i=2; i<size+1; i++)
     {
-		/* 根据rand(i)产生的伪随机数j，对S[j]和S[i-1]进行交换 */
+        /* 根据rand(i)产生的伪随机数j，对S[j]和S[i-1]进行交换 */
         j = rand(i);
-		/* printf("S[%3d]=0x%02X <--> S[%3d]=0x%02X\n", j, S[j], i-1, S[i-1]); */
+        /* printf("S[%3d]=0x%02X <--> S[%3d]=0x%02X\n", j, S[j], i-1, S[i-1]); */
         tmp = S[j];
         S[j] = S[i-1];
         S[i-1] = tmp;
