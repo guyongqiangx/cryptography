@@ -1,11 +1,17 @@
+/*
+ * @        file: sha1test.c
+ * @ description: test tool for sha1
+ * @      author: Gu Yongqiang
+ * @        blog: https://blog.csdn.net/guyongqiangx
+ */
 #include <stdio.h>  /* printf, fopen, fread, fclose... */
 #include <stdlib.h> /* exit */
 #include <string.h> /* strlen */
 #include <unistd.h> /* getopt */
 
-#include "md2.h"
+#include "sha1.h"
 
-#define HASH_DIGEST_SIZE    16      /* md2 digest size */
+#define HASH_DIGEST_SIZE    20      /* sha1 digest size */
 #define FILE_BLOCK_SIZE     1024
 
 /*
@@ -50,37 +56,37 @@ struct HASH_ITEM {
     { /* 0 */
         "",
         0,
-        "8350e5a3e24c153df2275c9f80692773"
+        "da39a3ee5e6b4b0d3255bfef95601890afd80709"
     },
     { /* 1 */
         "a",
         1,
-        "32ec01ec4a6dac72c0ab96fb34c0b5d1"
+        "86f7e437faa5a7fce15d1ddcb9eaeaea377667b8"
     },
     { /* 2 */
         "abc",
         3,
-        "da853b0d3f88d99b30283a69e6ded6bb"
+        "a9993e364706816aba3e25717850c26c9cd0d89d"
     },
     { /* 3 */
         "message digest",
         14,
-        "ab4f496bfb2a530b219ff33031fe06b0"
+        "c12252ceda8be8994d5fa0290a47231c1d16aae3"
     },
     { /* 4 */
         "abcdefghijklmnopqrstuvwxyz",
         26,
-        "4e8ddff3650292ab5a4108c3aa47940b"
+        "32d10c7b8cf96570ca04ce37f2a19d84240d3a89"
     },
     { /* 5 */
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
         62,
-        "da33def2a42df13975352846c30338cd"
+        "761c457bf73b14d27e9e9265c46f4b4dda11f940"
     },
     { /* 6 */
         "12345678901234567890123456789012345678901234567890123456789012345678901234567890",
         80,
-        "d5976f79d83d3a0dc9806c3c66f3efd8"
+        "50abf5706a150990a08b2c5ea40fa0e585554732"
     },
 };
 
@@ -97,7 +103,7 @@ static int internal_digest_tests(const char *argv0)
     for (item=&hashes[0]; item<(&hashes[0]+sizeof(hashes)/sizeof(hashes[0])); item++)
     {
         printf("%s(\"%s\")\n", argv0, item->str);
-        MD2((unsigned char*)item->str, item->len, digest);
+        SHA1((unsigned char*)item->str, item->len, digest);
         printf("  Expect: %s\n", item->md);
         printf("  Result: ");
         print_digest(digest);
@@ -116,7 +122,7 @@ static int digest_string(const char *argv0, const unsigned char *string, uint32_
 
     printf("%s(\"%s\") = ", argv0, string);
 
-    MD2(string, len, digest);
+    SHA1(string, len, digest);
 
     print_digest(digest);
     printf("\n");
@@ -129,7 +135,7 @@ static int digest_string(const char *argv0, const unsigned char *string, uint32_
  */
 static int digest_file(const char *argv0, const char *filename)
 {
-    MD2_CTX c;
+    SHA_CTX c;
     FILE *f;
 
     unsigned char digest[HASH_DIGEST_SIZE];
@@ -148,12 +154,12 @@ static int digest_file(const char *argv0, const char *filename)
     {
         printf("%s(%s) = ", argv0, filename);
 
-        MD2_Init(&c);
+        SHA1_Init(&c);
         while ((len = fread(buf, 1, FILE_BLOCK_SIZE, f)))
         {
-            MD2_Update(&c, buf, len);
+            SHA1_Update(&c, buf, len);
         }
-        MD2_Final(digest, &c);
+        SHA1_Final(digest, &c);
 
         fclose(f);
 
@@ -171,18 +177,18 @@ static int digest_file(const char *argv0, const char *filename)
  */
 static void digest_stdin(const char *argv0)
 {
-    MD2_CTX c;
+    SHA_CTX c;
 
     int len;
     unsigned char digest[HASH_DIGEST_SIZE];
     unsigned char buf[HASH_DIGEST_SIZE];
 
-    MD2_Init(&c);
+    SHA1_Init(&c);
     while ((len = fread(buf, 1, HASH_DIGEST_SIZE, stdin)))
     {
-        MD2_Update(&c, buf, len);
+        SHA1_Update(&c, buf, len);
     }
-    MD2_Final(digest, &c);
+    SHA1_Final(digest, &c);
 
     printf("%s(stdin) = ", argv0);
     print_digest(digest);
@@ -190,13 +196,13 @@ static void digest_stdin(const char *argv0)
 }
 
 /*
- * $ md2 -h
+ * $ sha1 -h
  * Usage:
  * Common options: [-x|-f file|-s string|-h]
  * Hash a string:
- *         md2 -s string
+ *         sha1 -s string
  * Hash a file:
- *         md2 -f file [-k key]
+ *         sha1 -f file [-k key]
  * -x      Internal string hash test
  * -h      Display this message
  */

@@ -1,11 +1,17 @@
+/*
+ * @        file: md4test.c
+ * @ description: test tool for md4
+ * @      author: Gu Yongqiang
+ * @        blog: https://blog.csdn.net/guyongqiangx
+ */
 #include <stdio.h>  /* printf, fopen, fread, fclose... */
 #include <stdlib.h> /* exit */
 #include <string.h> /* strlen */
 #include <unistd.h> /* getopt */
 
-#include "md2.h"
+#include "md4.h"
 
-#define HASH_DIGEST_SIZE    16      /* md2 digest size */
+#define HASH_DIGEST_SIZE    16      /* md4 digest size */
 #define FILE_BLOCK_SIZE     1024
 
 /*
@@ -50,37 +56,37 @@ struct HASH_ITEM {
     { /* 0 */
         "",
         0,
-        "8350e5a3e24c153df2275c9f80692773"
+        "31d6cfe0d16ae931b73c59d7e0c089c0"
     },
     { /* 1 */
         "a",
         1,
-        "32ec01ec4a6dac72c0ab96fb34c0b5d1"
+        "bde52cb31de33e46245e05fbdbd6fb24"
     },
     { /* 2 */
         "abc",
         3,
-        "da853b0d3f88d99b30283a69e6ded6bb"
+        "a448017aaf21d8525fc10ae87aa6729d"
     },
     { /* 3 */
         "message digest",
         14,
-        "ab4f496bfb2a530b219ff33031fe06b0"
+        "d9130a8164549fe818874806e1c7014b"
     },
     { /* 4 */
         "abcdefghijklmnopqrstuvwxyz",
         26,
-        "4e8ddff3650292ab5a4108c3aa47940b"
+        "d79e1c308aa5bbcdeea8ed63df412da9"
     },
     { /* 5 */
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
         62,
-        "da33def2a42df13975352846c30338cd"
+        "043f8582f241db351ce627e153e7f0e4"
     },
     { /* 6 */
         "12345678901234567890123456789012345678901234567890123456789012345678901234567890",
         80,
-        "d5976f79d83d3a0dc9806c3c66f3efd8"
+        "e33b4ddc9c38f2199c3e7b164fcc0536"
     },
 };
 
@@ -97,7 +103,7 @@ static int internal_digest_tests(const char *argv0)
     for (item=&hashes[0]; item<(&hashes[0]+sizeof(hashes)/sizeof(hashes[0])); item++)
     {
         printf("%s(\"%s\")\n", argv0, item->str);
-        MD2((unsigned char*)item->str, item->len, digest);
+        MD4((unsigned char*)item->str, item->len, digest);
         printf("  Expect: %s\n", item->md);
         printf("  Result: ");
         print_digest(digest);
@@ -116,7 +122,7 @@ static int digest_string(const char *argv0, const unsigned char *string, uint32_
 
     printf("%s(\"%s\") = ", argv0, string);
 
-    MD2(string, len, digest);
+    MD4(string, len, digest);
 
     print_digest(digest);
     printf("\n");
@@ -129,7 +135,7 @@ static int digest_string(const char *argv0, const unsigned char *string, uint32_
  */
 static int digest_file(const char *argv0, const char *filename)
 {
-    MD2_CTX c;
+    MD4_CTX c;
     FILE *f;
 
     unsigned char digest[HASH_DIGEST_SIZE];
@@ -148,12 +154,12 @@ static int digest_file(const char *argv0, const char *filename)
     {
         printf("%s(%s) = ", argv0, filename);
 
-        MD2_Init(&c);
+        MD4_Init(&c);
         while ((len = fread(buf, 1, FILE_BLOCK_SIZE, f)))
         {
-            MD2_Update(&c, buf, len);
+            MD4_Update(&c, buf, len);
         }
-        MD2_Final(digest, &c);
+        MD4_Final(digest, &c);
 
         fclose(f);
 
@@ -171,18 +177,18 @@ static int digest_file(const char *argv0, const char *filename)
  */
 static void digest_stdin(const char *argv0)
 {
-    MD2_CTX c;
+    MD4_CTX c;
 
     int len;
     unsigned char digest[HASH_DIGEST_SIZE];
     unsigned char buf[HASH_DIGEST_SIZE];
 
-    MD2_Init(&c);
+    MD4_Init(&c);
     while ((len = fread(buf, 1, HASH_DIGEST_SIZE, stdin)))
     {
-        MD2_Update(&c, buf, len);
+        MD4_Update(&c, buf, len);
     }
-    MD2_Final(digest, &c);
+    MD4_Final(digest, &c);
 
     printf("%s(stdin) = ", argv0);
     print_digest(digest);
@@ -190,13 +196,13 @@ static void digest_stdin(const char *argv0)
 }
 
 /*
- * $ md2 -h
+ * $ md4 -h
  * Usage:
  * Common options: [-x|-f file|-s string|-h]
  * Hash a string:
- *         md2 -s string
+ *         md4 -s string
  * Hash a file:
- *         md2 -f file [-k key]
+ *         md4 -f file [-k key]
  * -x      Internal string hash test
  * -h      Display this message
  */
